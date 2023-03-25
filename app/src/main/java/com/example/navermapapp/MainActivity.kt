@@ -32,7 +32,6 @@ class MainActivity : AppCompatActivity() , OnMapReadyCallback{
 
 
 
-
         binding.searchView.setOnQueryTextListener(object : OnQueryTextListener{
             override fun onQueryTextChange(p0: String?): Boolean {
                 return true
