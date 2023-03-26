@@ -2,9 +2,11 @@ package com.example.navermapapp
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.Html
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.widget.SearchView.OnQueryTextListener
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.navermapapp.databinding.ActivityMainBinding
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.geometry.Tm128
@@ -21,6 +23,10 @@ class MainActivity : AppCompatActivity() , OnMapReadyCallback{
     private lateinit var binding : ActivityMainBinding
     private lateinit var naverMap : NaverMap
     private var isMapInit = false
+
+    private var restaurantListAdapter = RestaurantListAdapter{
+        moveCamera(it)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -30,7 +36,10 @@ class MainActivity : AppCompatActivity() , OnMapReadyCallback{
         binding.mapView.onCreate(savedInstanceState)
         binding.mapView.getMapAsync(this)
 
-
+        binding.bottomSheetLayout.searchResultRecyclerView.apply {
+            layoutManager = LinearLayoutManager(context)
+                adapter = restaurantListAdapter
+        }
 
         binding.searchView.setOnQueryTextListener(object : OnQueryTextListener{
             override fun onQueryTextChange(p0: String?): Boolean {
@@ -59,15 +68,13 @@ class MainActivity : AppCompatActivity() , OnMapReadyCallback{
                             //검색된 부분들 마커 처리하기
                             val markers = searchItemList.map {
                                 Marker(Tm128(it.mapx.toDouble(), it.mapy.toDouble()).toLatLng()).apply {
-                                    captionText = it.title
+                                    captionText = Html.fromHtml(it.title, Html.FROM_HTML_MODE_LEGACY).toString()
                                     map = naverMap
                                 }
                             }
 
-                            //첫 번째 검색어 부분 카메라 이동
-                            val cameraUpdate = CameraUpdate.scrollTo(markers.first().position)
-                                .animate(CameraAnimation.Easing)
-                            naverMap.moveCamera(cameraUpdate)
+                            restaurantListAdapter.setData(searchItemList)
+                            moveCamera(markers.first().position)
 
 
                         }
@@ -80,6 +87,14 @@ class MainActivity : AppCompatActivity() , OnMapReadyCallback{
         })
     }
 
+    private fun moveCamera(Position : LatLng){
+        if(isMapInit.not()) return
+
+        //첫 번째 검색어 부분 카메라 이동
+        val cameraUpdate = CameraUpdate.scrollTo(Position)
+            .animate(CameraAnimation.Easing)
+        naverMap.moveCamera(cameraUpdate)
+    }
     override fun onStart() {
         super.onStart()
         binding.mapView.onStart()

@@ -24,6 +24,7 @@
     <TextView
         android:id="@+id/bottomSheetTitleView"
         android:text="대동맛집도"
+        android:textColor="@color/black"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/view"
