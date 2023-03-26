@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.widget.SearchView.OnQueryTextListener
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.navermapapp.databinding.ActivityMainBinding
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.geometry.Tm128
 import com.naver.maps.map.CameraAnimation
@@ -23,9 +24,10 @@ class MainActivity : AppCompatActivity() , OnMapReadyCallback{
     private lateinit var binding : ActivityMainBinding
     private lateinit var naverMap : NaverMap
     private var isMapInit = false
-
+    private var markers = emptyList<Marker>()
     private var restaurantListAdapter = RestaurantListAdapter{
-        moveCamera(it)
+        collapseBottomSheet()
+        moveCamera(it, NaverMap.MAXIMUM_ZOOM.toDouble())
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,8 +67,10 @@ class MainActivity : AppCompatActivity() , OnMapReadyCallback{
                             }
 //                            Log.e("onResponse", response.body().toString())
 
+                            markers.forEach { it.map = null }
+
                             //검색된 부분들 마커 처리하기
-                            val markers = searchItemList.map {
+                            markers = searchItemList.map {
                                 Marker(Tm128(it.mapx.toDouble(), it.mapy.toDouble()).toLatLng()).apply {
                                     captionText = Html.fromHtml(it.title, Html.FROM_HTML_MODE_LEGACY).toString()
                                     map = naverMap
@@ -74,7 +78,8 @@ class MainActivity : AppCompatActivity() , OnMapReadyCallback{
                             }
 
                             restaurantListAdapter.setData(searchItemList)
-                            moveCamera(markers.first().position)
+                            collapseBottomSheet()
+                            moveCamera(markers.first().position, 14.0)
 
 
                         }
@@ -87,13 +92,18 @@ class MainActivity : AppCompatActivity() , OnMapReadyCallback{
         })
     }
 
-    private fun moveCamera(Position : LatLng){
+    private fun moveCamera(Position : LatLng, zoomLevel : Double){
         if(isMapInit.not()) return
 
         //첫 번째 검색어 부분 카메라 이동
-        val cameraUpdate = CameraUpdate.scrollTo(Position)
+        val cameraUpdate = CameraUpdate.scrollAndZoomTo(Position, zoomLevel)
             .animate(CameraAnimation.Easing)
         naverMap.moveCamera(cameraUpdate)
+    }
+
+    private fun collapseBottomSheet(){
+        val bottomSheetBehavior = BottomSheetBehavior.from(binding.bottomSheetLayout.root)
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
     }
     override fun onStart() {
         super.onStart()
